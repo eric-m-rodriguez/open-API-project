@@ -11,3 +11,5 @@ fetch (weatherUrl) /*fetches data from GitHub API*/
     
     .catch (error => 
         console.error("Error", error.message)); /*logs error message to the console */
+
+/*Adding updates here to create new lesson-13 pull request; to delete later*/
