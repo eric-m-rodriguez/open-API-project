@@ -1,10 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=45.5234&longitude=-122.6762&current=temperature_2m,is_day,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&hourly=temperature_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
+
+    /*Defines the URL for the weather API. This URL includes the latitude and longitude for Portland, Oregon, and requests the current temperature in Fahrenheit.*/
+
+    const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=45.5234&longitude=-122.6762&current=temperature_2m&temperature_unit=fahrenheit';
+
+    /*Defines the URL for the weather API. This URL includes the latitude and longitude for Portland, Oregon, and requests the current weather conditions. */
+
+    const conditionsURL = 'https://api.open-meteo.com/v1/forecast?latitude=45.5234&longitude=-122.6762&current=is_day,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&wind_speed_unit=mph&precipitation_unit=inch';
   
     let weatherData = {};
   
     function fetchData(endpoint) {
-      fetch(weatherUrl)
+        let apiUrl = endpoint === 'temperature' ? weatherUrl : conditionsURL; /*selects the right url*/
+        fetch(apiUrl)
         .then(response => {
           console.log("API response status:", response.status);
           if (!response.ok) {
@@ -31,9 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
         title.textContent = "Current Temperature";
         const temp = weatherData.current ? weatherData.current.temperature_2m : "N/A";
         dataDisplay.innerHTML = `<p>The current temperature is <strong>${temp}°F</strong>.</p>`;
+
       } else if (endpoint === 'conditions') {
         title.textContent = "Weather Conditions";
-        const conditions = weatherData.current ? (weatherData.current.is_day ? "Daytime" : "Nighttime") : "N/A";
+        const conditions = weatherData.current 
+            ? `Time of Day: ${weatherData.current.is_day ? 'Daytime' : 'Nighttime'} <br>
+            Precipitation: ${weatherData.current.precipitation} inches <br>
+            Cloud Cover: ${weatherData.current.cloud_cover}% <br>
+            Wind Speed: ${weatherData.current.wind_speed_10m} mph`
+            : "N/A";
         dataDisplay.innerHTML = `<p>It is currently <strong>${conditions}</strong>.</p>`;
       }
     }
