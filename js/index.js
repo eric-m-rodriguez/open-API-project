@@ -1,52 +1,83 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=45.5234&longitude=-122.6762&current=temperature_2m,is_day,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&hourly=temperature_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
-  
-    let weatherData = {};
-  
-    function fetchData(endpoint) {
-      fetch(weatherUrl)
+
+/*API URL for the weather API. This URL includes the latitude and longitude for Portland, Oregon, and requests the current temperature in Fahrenheit. */
+   
+const weatherUrl =  'https://api.open-meteo.com/v1/forecast?latitude=45.5234&longitude=-122.6762&hourly=temperature_2m&temperature_unit=fahrenheit&timezone=auto';
+
+/*API URL for the air quality API. This URL includes the latitude and longitude for Portland, Oregon, and requests the current air quality index. */
+    
+const airQualityUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=45.5234&longitude=-122.6762&hourly=pm2_5&timezone=auto';
+
+let weatherData = {};
+let airQualityData = {};
+
+    /*Fetch Weather Data (Temperature)*/
+    function fetchWeather() {
+        fetch(weatherUrl) 
         .then(response => {
-          console.log("API response status:", response.status);
+          console.log("Weather API response status:", response.status);
           if (!response.ok) {
-            throw new Error("Network response was not ok.");
+            throw new Error("Weather API failed");
           }
           return response.json();
         })
+            .then(data => {
+              console.log("Weather API data", data);
+              weatherData = data;
+              displayWeather(data);
+            })
+            .catch(error => {
+              console.error("Error fetching weather data:", error.message);
+              document.getElementById('weatherData').textContent = "Sorry, we couldn't retrieve the weather data at this time.";
+            });
+        }
+
+    /*Fetch Air Quality Data*/
+    function fetchAirQuality() {
+        fetch(airQualityUrl)
+        .then(response => {
+            console.log("Air Quality API response status:", response.status);
+            if (!response.ok) {
+                throw new Error ("Air Quality API failed");
+            }
+            return response.json();
+        })
         .then(data => {
-          console.log("API data received:", data);
-          weatherData = data;
-          displayData(endpoint);
+            console.log("Air Quality API data", data);
+            airQualityData = data;
+            displayAirQuality(data);
         })
         .catch(error => {
-          console.error("Error: API", error.message);
-          document.getElementById('weatherData').textContent = "Sorry, we couldn't retrieve the weather data at this time.";
+            console.error("Error fetching air quality data:", error.message);
+            document.getElementById('airQualityData').textContent = "Unable to fetch air quality data";
         });
     }
-  
-    function displayData(endpoint) {
-      const title = document.getElementById('title');
-      const dataDisplay = document.getElementById('weatherData');
-  
-      if (endpoint === 'temperature') {
-        title.textContent = "Current Temperature";
-        const temp = weatherData.current ? weatherData.current.temperature_2m : "N/A";
-        dataDisplay.innerHTML = `<p>The current temperature is <strong>${temp}°F</strong>.</p>`;
-      } else if (endpoint === 'conditions') {
-        title.textContent = "Weather Conditions";
-        const conditions = weatherData.current ? (weatherData.current.is_day ? "Daytime" : "Nighttime") : "N/A";
-        dataDisplay.innerHTML = `<p>It is currently <strong>${conditions}</strong>.</p>`;
-      }
-    }
-  
-    // Event listeners for navigation links
-    document.getElementById('temperatureLink').addEventListener('click', () => {
-      fetchData('temperature');
+
+    /*Display Weather Temperature*/
+        function displayWeather(data) {
+            document.getElementById('temperatureTitle').textContent = "Current Temperature";
+
+            const temp = (data.hourly && data.hourly.temperature_2m && data.hourly.temperature_2m.length > 0) ? data.hourly.temperature_2m[0] : "N/A";
+
+            document.getElementById('airQualityData').innerHTML = "";
+
+            document.getElementById('weatherData').innerHTML = `<p>The current Temperature is <strong>${temp} degrees Fahrenheit</strong>.</p>`;
+        }
+
+    /*Display Air Quality*/
+            function displayAirQuality(data) {
+                document.getElementById('airQualityTitle').textContent = "Air Quality Index";
+
+                const aqi = (data.hourly?.pm2_5 && data.hourly.pm2_5.length > 0) ? data.hourly.pm2_5[0] : "N/A";
+
+                document.getElementById('weatherData').innerHTML = "";
+
+                document.getElementById('airQualityData').innerHTML = `<p>The current Air Quality Index is <strong>${aqi} ppm</strong>.</p>`;
+                }
+
+        document.getElementById('temperatureTitle').addEventListener('click', fetchWeather);
+        document.getElementById('airQualityTitle').addEventListener('click', fetchAirQuality);
+        
+        fetchWeather();
     });
-  
-    document.getElementById('conditionsLink').addEventListener('click', () => {
-      fetchData('conditions');
-    });
-  
-    // Initial data load (set to display temperature by default)
-    fetchData('temperature');
-  });
+        
